@@ -3,6 +3,7 @@ package com.mweis.game;
 import com.badlogic.gdx.ApplicationListener;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.ai.GdxAI;
+import com.badlogic.gdx.ai.msg.MessageManager;
 import com.badlogic.gdx.graphics.GL20;
 import com.mweis.game.view.ScreenManager;
 import com.mweis.game.view.screens.GameScreen;
@@ -39,7 +40,7 @@ public class Game implements ApplicationListener {
 
 	@Override
 	public void render() {
-		Gdx.gl.glClearColor(1, 0, 1, 1);
+		Gdx.gl.glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 		
 		float deltaTime = Gdx.graphics.getDeltaTime(); // this is the "real" dt, used to allow constant DT steps
@@ -51,6 +52,7 @@ public class Game implements ApplicationListener {
 		while (accumulator >= DELTA_TIME) {
 			GdxAI.getTimepiece().update(DELTA_TIME);
 			ScreenManager.getCurrentScreen().update();
+			MessageManager.getInstance().update();
 			accumulator -= DELTA_TIME;
 		}
 		
