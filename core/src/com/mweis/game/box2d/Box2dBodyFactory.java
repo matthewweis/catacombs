@@ -18,12 +18,44 @@ public class Box2dBodyFactory {
 		
 		bodyDef.type = BodyType.DynamicBody; // could be kinematic
 		
-		bodyDef.position.set(position.cpy().scl(Constants.MPP));
+//		bodyDef.position.set(position.cpy().scl(Constants.MPP));
+		bodyDef.position.set(position);
 
 		Body body = world.createBody(bodyDef);
 		
 		PolygonShape polygon = new PolygonShape();
-		polygon.setAsBox(32.0f / Constants.PPM, 32.0f / Constants.PPM); // this is half-width and half-height, thus a 2x2 meter box
+//		polygon.setAsBox(32.0f / Constants.PPM, 32.0f / Constants.PPM); // this is half-width and half-height, thus a 2x2 meter box
+		polygon.setAsBox(1.0f, 1.0f); // this is half-width and half-height, thus a 2x2 meter box
+
+		
+		FixtureDef fixtureDef = new FixtureDef();
+		fixtureDef.shape = polygon;
+//		fixtureDef.density = density;
+//		fixtureDef.isSensor = isSensor;
+		
+		Fixture fixture = body.createFixture(fixtureDef);
+
+		polygon.dispose();
+		
+		return body;
+	}
+	
+	
+	
+	public static Body createStaticSquare(Vector2 position, float size, World world) {
+		BodyDef bodyDef = new BodyDef();
+		
+		bodyDef.type = BodyType.StaticBody;
+		
+//		bodyDef.position.set(position.cpy().scl(Constants.MPP));
+		bodyDef.position.set(position);
+
+
+		Body body = world.createBody(bodyDef);
+		
+		PolygonShape polygon = new PolygonShape();
+//		polygon.setAsBox(size / 2 / Constants.PPM, size / 2 / Constants.PPM);
+		polygon.setAsBox(size / 2, size / 2);
 
 		FixtureDef fixtureDef = new FixtureDef();
 		fixtureDef.shape = polygon;
@@ -37,19 +69,20 @@ public class Box2dBodyFactory {
 		return body;
 	}
 	
-	public static Body createStaticSquare(Vector2 position, float size, World world) {
+	public static Body createStaticRectangle(float x, float y, float width, float height, World world) {
 		BodyDef bodyDef = new BodyDef();
 		
 		bodyDef.type = BodyType.StaticBody;
 		
-		bodyDef.position.set(position.cpy().scl(Constants.MPP));
+//		bodyDef.position.set(position.cpy().scl(Constants.MPP));
+		bodyDef.position.set(x + width/2, y + height/2);
 
 
 		Body body = world.createBody(bodyDef);
 		
 		PolygonShape polygon = new PolygonShape();
-		polygon.setAsBox(size / 2 / Constants.PPM, size / 2 / Constants.PPM);
-//		polygon.setAsBox(size / 2, size / 2);
+//		polygon.setAsBox(size / 2 / Constants.PPM, size / 2 / Constants.PPM);
+		polygon.setAsBox(width / 2, height / 2);
 
 		FixtureDef fixtureDef = new FixtureDef();
 		fixtureDef.shape = polygon;
@@ -91,7 +124,9 @@ public class Box2dBodyFactory {
 		
 //		v1.scl(Constants.MPP);
 //		v1.scl(Constants.MPP;
-		edge.set(v1.cpy().scl(Constants.MPP), v2.cpy().scl(Constants.MPP));
+//		edge.set(v1.cpy().scl(Constants.MPP), v2.cpy().scl(Constants.MPP));
+		edge.set(v1, v2);
+
 //		edge.set(v1c, v2c);
 
 		FixtureDef fixtureDef = new FixtureDef();

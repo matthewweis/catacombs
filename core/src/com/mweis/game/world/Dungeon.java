@@ -1,7 +1,6 @@
 package com.mweis.game.world;
 
 import java.awt.geom.Line2D;
-
 import com.badlogic.gdx.ai.msg.MessageManager;
 import com.badlogic.gdx.ai.msg.Telegram;
 import com.badlogic.gdx.ai.msg.Telegraph;
@@ -17,7 +16,6 @@ import com.badlogic.gdx.utils.IntMap;
 import com.badlogic.gdx.utils.ObjectSet;
 import com.badlogic.gdx.utils.IntMap.Keys;
 import com.mweis.game.box2d.Box2dBodyFactory;
-import com.mweis.game.util.Constants;
 import com.mweis.game.util.Messages;
 import com.mweis.game.world.Room.RoomType;
 import com.mweis.game.world.graph.DGraph;
@@ -36,7 +34,7 @@ public class Dungeon implements Telegraph {
 	private DGraph<Room> criticalRoomGraph;
 	private DGraph<Room> dungeonGraph;
 	
-	public final int UNITS_PER_PARTITION = 200; // units per square in the spatial partition for vectors -> rooms
+	public final int UNITS_PER_PARTITION = 5; // units per square in the spatial partition for vectors -> rooms
 	public final int PARTITION_WIDTH; // with in CHUNKS
 	private final IntMap<Array<Room>> spatialPartition; // where Integer is x+y*unitsPerPartition coord
 	
@@ -207,6 +205,10 @@ public class Dungeon implements Telegraph {
 		return graph;
 	}
 	
+	/*
+	 * Depreciated and not fully implemented, would be more efficient if possible though
+	 */
+	@SuppressWarnings("unused")
 	private void populateBox2dWorld() {
 		// room pass
 		for (Room room : allRooms) {
@@ -359,43 +361,152 @@ public class Dungeon implements Telegraph {
 	/*
 	 * N^3 slow algorithm, but is very precise
 	 */
-	private void populateBox2dWorldV2() {
-		int size = spatialPartition.size;
-		System.out.println(size);
-//		
-//		spatialPartition.keys().reset();
-//		Keys itr = spatialPartition.keys();
-////		int i = 0;
-//		while (itr.hasNext) {
-////		while (i < size) {
-//			int key = itr.next();
-////			int key = i;
-//			
-//			int blockSize = 20;
-////			Array<Room> potentialColls = spatialPartition.get(key);
-//			
-//			int chunkX = key % PARTITION_WIDTH;
-//			int chunkY = key / PARTITION_WIDTH;
-//			for (int y=chunkY*UNITS_PER_PARTITION; y < UNITS_PER_PARTITION*chunkY+chunkY; y += blockSize) {
-//				for (int x=chunkX*UNITS_PER_PARTITION; x < UNITS_PER_PARTITION*chunkX+chunkX; x += blockSize) {
-//					if (this.getRoomsContainingArea(new Rectangle(x, y, blockSize, blockSize)).size == 0) {
-//						Box2dBodyFactory.createStaticSquare(new Vector2(x, y), blockSize, world);
-//					}
-//				}
-//			}
-//			System.out.format("iter %d / %d%n", key, size);
-////			i++;
-//		}
-//		spatialPartition.keys().reset(); // reset again to be safe
+	private void populateBox2dWorldV2() {		
 		
-		int blockSize = 3 * Constants.PPM;
-		for (int y=0; y < HEIGHT; y += blockSize) {
-			for (int x=0; x < WIDTH; x += blockSize) {
-				if (this.getRoomsContainingArea(new Rectangle(x, y, blockSize, blockSize)).size == 0) {
-					Box2dBodyFactory.createStaticSquare(new Vector2(x, y), blockSize, world);
-				}
+		/*
+		 * TileMerging algorithm from https://love2d.org/wiki/TileMerging, this merges WALLS ONLY
+		 */
+		int blockSize = 1;
+		
+		// a different way of representing rectangles, consistent with the TileMerging algorithm
+		class PointRectangle implements Comparable<PointRectangle> {
+			int start_x, start_y, end_x, end_y;
+			PointRectangle(int sx, int sy, int ex, int ey) {
+				start_x = sx;
+				start_y = sy;
+				end_x = ex;
+				end_y = ey;
+			}
+			@Override
+			public int compareTo(PointRectangle other) {
+				return this.start_y < other.start_y ? 1 : -1;
 			}
 		}
+		
+		Array<PointRectangle> rectangles = new Array<PointRectangle>();
+		for (int x = 0; x < WIDTH; x++) {
+			// Integers mean we need to watch the == sign!
+			Integer start_y = null;
+			Integer end_y = null;
+			
+			for (int y = 0; y < HEIGHT; y++) {
+				if (this.getRoomsInArea(new Rectangle(x, y, blockSize, blockSize)).size == 0) { // check if chunk goes here
+					if (start_y == null) {
+						start_y = y;
+					}
+					end_y = y;
+				} else if (start_y != null) {
+					Array<PointRectangle> overlaps = new Array<PointRectangle>();
+					for (PointRectangle r : rectangles) {
+						if (r.end_x == x - blockSize // ? blockSize or 1 ?
+							&& start_y <= r.start_y
+							&& end_y >= r.end_y) {
+							overlaps.add(r);
+						}
+					}
+					overlaps.sort();
+					for (PointRectangle r : overlaps) {
+						if (start_y == null) { // ! added safeguard
+							break;
+						}
+						
+						if (start_y < r.start_y) {
+							PointRectangle new_rect = new PointRectangle(x, start_y, x, r.start_y - blockSize);
+							rectangles.add(new_rect);
+							start_y = r.start_y;
+						}
+						
+						if (start_y == r.start_y) {
+							r.end_x = r.end_x + blockSize;
+							if (end_y == r.end_y) {
+								start_y = null;
+								end_y = null;
+							} else if (end_y > r.end_y) {
+								start_y = r.end_y + blockSize;
+							}
+						}
+					}
+					if (start_y != null) {
+						PointRectangle new_rect = new PointRectangle(x, start_y, x, end_y);
+						rectangles.add(new_rect);
+						start_y = null;
+						end_y = null;
+					}
+				}
+			}
+			if (start_y != null) {
+				PointRectangle new_rect = new PointRectangle(x, start_y, x, end_y);
+				rectangles.add(new_rect);
+				start_y = null;
+				end_y = null;
+			}
+		}
+		
+		/*
+		 * Merge walls into larger rectangles iff the walls have the same start and end y
+		 */	
+		boolean mergeFlag = false;
+		do {
+			mergeFlag = false;
+			PointRectangle new_rect = null, old_rect1 = null, old_rect2 = null;
+			int size = rectangles.size; // must calc here is it's changing often
+			A: for (int i=0; i < size; i++) {
+				for (int j=0; j < size; j++) { // can j start at i+1?
+					if (i != j) {
+						PointRectangle r1 = rectangles.get(i);
+						PointRectangle r2 = rectangles.get(j);
+						if (withinNUnits(r1.start_x, r2.end_x, blockSize) || withinNUnits(r1.end_x, r2.start_x, blockSize)) {
+							if (r1.start_y == r2.start_y && r1.end_y == r2.end_y) {
+								// combine the walls
+								int sx = min(r1.start_x, min(r1.end_x, min(r2.start_x, r2.end_x)));
+								int sy = min(r1.start_y, min(r1.end_y, min(r2.start_y, r2.end_y)));
+								int ex = max(r1.start_x, max(r1.end_x, max(r2.start_x, r2.end_x)));
+								int ey = max(r1.start_y, max(r1.end_y, max(r2.start_y, r2.end_y)));
+								new_rect = new PointRectangle(sx, sy, ex, ey);
+								old_rect1 = r1;
+								old_rect2 = r2;
+								mergeFlag = true;
+								break A;
+							}
+						}
+					}
+				}
+			}
+			if (new_rect != null) {
+				rectangles.removeValue(old_rect1, true);
+				rectangles.removeValue(old_rect2, true);
+				rectangles.add(new_rect);
+			}
+		} while (mergeFlag);
+		
+		/*
+		 * Tiles are now merged, time to box2dify them
+		 */
+		
+		for (PointRectangle r : rectangles) {
+			int sx = min(r.start_x, r.end_x);
+			int sy = min(r.start_y, r.end_y);
+			int height = max(r.start_y, r.end_y) - sy;
+			int width = max(r.start_x, r.end_x) - sx;
+			Box2dBodyFactory.createStaticRectangle(sx, sy, width, height, world);
+		}
+		
+		/*
+		 * Finally, make a border around the entire dungeon preventing escape
+		 * 
+		 * We might not want this actually, it could be cool to just put water/lava/height around the edges instead,
+		 * light could bleed in and it would be a tactical spot for players with knockback abilities to kite enemy mobs to.
+		 * (also light might hurt mobs, meaning kiting mobs towards the light is smart if the mob's weakness is known.
+		 */
+		Vector2 bottom_left = Vector2.Zero;
+		Vector2 bottom_right = new Vector2(WIDTH, 0);
+		Vector2 top_left = new Vector2(0, HEIGHT);
+		Vector2 top_right = new Vector2(WIDTH, HEIGHT);
+		Box2dBodyFactory.createEdge(top_left, top_right, world); // top
+		Box2dBodyFactory.createEdge(bottom_left, bottom_right, world); // bottom
+		Box2dBodyFactory.createEdge(bottom_left, top_left, world); // left
+		Box2dBodyFactory.createEdge(bottom_right, top_right, world); // right
+		
 	}
 	
 	ShapeRenderer sr = new ShapeRenderer();
@@ -408,7 +519,7 @@ public class Dungeon implements Telegraph {
 	    for (Room corridor : getCorridors()) {
 	    	sr.rect(corridor.getLeft(), corridor.getBottom(), corridor.getWidth(), corridor.getHeight());
 	    }
-	    sr.setColor(Color.GREEN);
+	    sr.setColor(Color.SALMON);
 		for (Room rooms : getRooms()) {
 			sr.rect(rooms.getLeft(), rooms.getBottom(), rooms.getWidth(), rooms.getHeight());
 		}
@@ -641,6 +752,18 @@ public class Dungeon implements Telegraph {
 	public Integer calculatePartitionKey(int x, int y) {
 		int px = x / UNITS_PER_PARTITION, py = y / UNITS_PER_PARTITION;
 		return px + py * PARTITION_WIDTH;
+	}
+	
+	private int min(int a, int b) {
+		return a < b ? a : b;
+	}
+	
+	private int max(int a, int b) {
+		return a > b ? a : b;
+	}
+	
+	private boolean withinNUnits(int a, int b, int range) {
+		return Math.abs(a - b) <= range;
 	}
 
 	@Override

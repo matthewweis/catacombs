@@ -5,6 +5,7 @@ import com.badlogic.gdx.ai.GdxAI;
 import com.badlogic.gdx.ai.msg.MessageManager;
 import com.badlogic.gdx.ai.msg.Telegram;
 import com.badlogic.gdx.ai.msg.Telegraph;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer;
@@ -29,7 +30,8 @@ public class GameScreen implements Screen, Telegraph {
 		float w = Gdx.graphics.getWidth();
 		float h = Gdx.graphics.getHeight();
 		cam = new OrthographicCamera();
-		cam.setToOrtho(false, 90 * Constants.PPM, 90 * Constants.PPM * (h / w));
+//		cam.setToOrtho(false, 90 * Constants.PPM, 90 * Constants.PPM * (h / w));
+		cam.setToOrtho(false, 90, 90 * (h / w));
 		cam.update();
 		
 		MessageManager.getInstance().addListener(this, Messages.Input.SCROLLED);
@@ -38,13 +40,16 @@ public class GameScreen implements Screen, Telegraph {
 	@Override
 	public void render() {
 		Vector3 position = cam.position;
-		position.x = player.body.getPosition().x * Constants.PPM;
-		position.y = player.body.getPosition().y * Constants.PPM;
+//		position.x = player.body.getPosition().x * Constants.PPM;
+//		position.y = player.body.getPosition().y * Constants.PPM;
+		position.x = player.body.getPosition().x;
+		position.y = player.body.getPosition().y;
 		cam.position.set(position);
 		cam.update();
 		
 		dungeon.render(cam.combined);
-		renderer.render(dungeon.world, cam.combined.scl(Constants.PPM));
+//		renderer.render(dungeon.world, cam.combined.scl(Constants.PPM));
+		renderer.render(dungeon.world, cam.combined);
 	}
 
 	@Override
@@ -54,8 +59,10 @@ public class GameScreen implements Screen, Telegraph {
 
 	@Override
 	public void resize(int width, int height) {
-		cam.viewportWidth = 90f * Constants.PPM;
-		cam.viewportHeight = 90f * Constants.PPM * height / width;
+//		cam.viewportWidth = 90f * Constants.PPM;
+//		cam.viewportHeight = 90f * Constants.PPM * height / width;
+		cam.viewportWidth = 90f;
+		cam.viewportHeight = 90f * height / width;
 		cam.update();
 	}
 

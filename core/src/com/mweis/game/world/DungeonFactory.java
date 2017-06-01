@@ -1,12 +1,8 @@
 package com.mweis.game.world;
 
 import java.util.Random;
-
 import com.badlogic.gdx.ai.pfa.Connection;
-import com.badlogic.gdx.maps.Map;
-import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.Array;
-import com.badlogic.gdx.utils.ObjectMap;
 import com.mweis.game.world.graph.DGraph;
 import com.mweis.game.world.graph.Edge;
 
@@ -28,11 +24,11 @@ public class DungeonFactory {
 	 */
 	private static int mapSize = 35*2;
 	private static int scale = 1;
-	private static int minSideLength = 250;
-	private static int maxSideLength = 550;
-	private static int hallWidth = 75;
-	private static int corridorCount = 20;
-	private static int roomCount = 80;
+	private static int minSideLength = 24;
+	private static int maxSideLength = 38;
+	private static int hallWidth = 7;
+	private static int corridorCount = 14;
+	private static int roomCount = 60;
 	private static float minRatio = 1.0f;
 	private static float maxRatio = 1.5f;
 	private static float touchedRoomChance = 1.0f;
