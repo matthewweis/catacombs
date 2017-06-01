@@ -28,7 +28,7 @@ public class GameScreen implements Screen, Telegraph {
 		float w = Gdx.graphics.getWidth();
 		float h = Gdx.graphics.getHeight();
 		cam = new OrthographicCamera();
-		cam.setToOrtho(false, 90, 90 * (h / w));
+		cam.setToOrtho(false, 90 * Constants.PPM, 90 * Constants.PPM * (h / w));
 		cam.update();
 		
 		MessageManager.getInstance().addListener(this, Messages.Input.SCROLLED);
@@ -42,8 +42,6 @@ public class GameScreen implements Screen, Telegraph {
 		cam.position.set(position);
 		cam.update();
 		
-//		cam.position.set(player.body.getPosition(), 0.0f);
-//		cam.update();
 		renderer.render(dungeon.world, cam.combined.scl(Constants.PPM));
 	}
 
@@ -54,8 +52,8 @@ public class GameScreen implements Screen, Telegraph {
 
 	@Override
 	public void resize(int width, int height) {
-		cam.viewportWidth = 90f;
-		cam.viewportHeight = 90f * height / width;
+		cam.viewportWidth = 90f * Constants.PPM;
+		cam.viewportHeight = 90f * Constants.PPM * height / width;
 		cam.update();
 	}
 

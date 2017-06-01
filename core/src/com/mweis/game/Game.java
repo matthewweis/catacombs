@@ -12,8 +12,8 @@ import com.mweis.game.view.screens.GameScreen;
 /*
  * roadmap
  * ==========================
- * Setup base w/ Messages
- * Setup b2d WSAD world
+ * Setup base w/ Messages (DONE) 
+ * Setup b2d WSAD world (DONE)
  * Setup b2d from gen world
  * Setup base entity (only what is needed for tests, NO STEERING YET)
  * setup colls w/ world

@@ -12,7 +12,8 @@ public class Constants {
 	public static final int VIEWPORT_WIDTH = 10;
 	public static final int VIEWPORT_HEIGHT = 10;
 //	public static final float DELTA_TIME = 1 / 60f;
-
+	
+	public static final float SQRT_2 = (float) Math.sqrt(2.0d);
 	
 	private Constants() { };
 }

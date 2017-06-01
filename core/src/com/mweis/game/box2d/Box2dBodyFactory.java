@@ -15,7 +15,7 @@ public class Box2dBodyFactory {
 	public static Body createDynamicSquare(World world) {
 		BodyDef bodyDef = new BodyDef();
 		
-		bodyDef.type = BodyType.DynamicBody;
+		bodyDef.type = BodyType.DynamicBody; // could be kinematic
 		
 //		bodyDef.position.set(position);
 

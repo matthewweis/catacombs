@@ -7,10 +7,12 @@ import com.badlogic.gdx.ai.fsm.State;
 import com.badlogic.gdx.ai.msg.MessageManager;
 import com.badlogic.gdx.ai.msg.Telegram;
 import com.badlogic.gdx.physics.box2d.Body;
+import com.mweis.game.util.Constants;
 import com.mweis.game.util.Messages;
 
 public enum PlayerState implements State<PlayerAgent> {
 	DEFAULT() {
+		
 		@Override
 		public void enter(PlayerAgent entity) {
 			MessageManager.getInstance().dispatchMessage(null, entity, Messages.Entity.UPDATE);
@@ -18,7 +20,7 @@ public enum PlayerState implements State<PlayerAgent> {
 
 		@Override
 		public void update(PlayerAgent entity) {
-
+			
 			float vx = 0.0f, vy = 0.0f, scale = 40 * 20.0f;
 			if (Gdx.input.isKeyPressed(Keys.W)) {
 				vy += 1.0f * GdxAI.getTimepiece().getDeltaTime() * scale;
@@ -33,8 +35,14 @@ public enum PlayerState implements State<PlayerAgent> {
 				vx += 1.0f * GdxAI.getTimepiece().getDeltaTime()* scale;
 			}
 			
-			entity.body.setLinearVelocity(vx, vy);
 			
+			if (vx != 0 && vy != 0) {
+				vx /= Constants.SQRT_2;
+				vy /= Constants.SQRT_2;
+			}
+			
+			entity.body.setLinearVelocity(vx, vy);
+						
 			MessageManager.getInstance().dispatchMessage(1/60.0f, null, entity, Messages.Entity.UPDATE);
 		}
 
