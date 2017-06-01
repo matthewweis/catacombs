@@ -11,7 +11,7 @@ import com.mweis.game.world.graph.DGraph;
 import com.mweis.game.world.graph.Edge;
 
 /*
- * An implementation of
+ * From tutorial implementation, but with changes for this project:
  * https://github.com/fisherevans/ProceduralGeneration/blob/master/dungeons/src/main/java/com/fisherevans/procedural_generation/dungeons/DungeonGenerator.java
  * 
  * Corridors are the amount of "critical" rooms which will be passed through.
@@ -52,11 +52,9 @@ public class DungeonFactory {
 		Array<Room> untouched = removeUntouched(rooms, halls);
 		
 		findStartAndEnd(corridors);
-		
-		return new Dungeon(start, end, rooms, corridors, halls, graph);
-		
-//		return new Dungeon(start, end, rooms, corridors, halls, graph, minSideLength,
-//				maxSideLength, hallWidth, minRatio, maxRatio);
+				
+		return new Dungeon(start, end, rooms, corridors, halls, graph, minSideLength,
+				maxSideLength, hallWidth, minRatio, maxRatio);
 	}
 	
 	private static Array<Room> createRooms() {

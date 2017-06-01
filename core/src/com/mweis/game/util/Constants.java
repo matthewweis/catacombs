@@ -9,6 +9,7 @@ import com.badlogic.gdx.math.Vector2;
 public class Constants {
 	
 	public static final int PPM = 32;
+	public static final float MPP = 1/32f;
 	public static final int VIEWPORT_WIDTH = 10;
 	public static final int VIEWPORT_HEIGHT = 10;
 //	public static final float DELTA_TIME = 1 / 60f;
