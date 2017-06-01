@@ -7,6 +7,8 @@ public final class Messages {
 		public final static int DOWN = next();
 		public final static int LEFT = next();
 		public final static int RIGHT = next();
+		
+		public final static int SCROLLED = next(); // extraInfo holds amount
 	}
 	
 	public static final class Dungeon {

@@ -5,6 +5,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.ai.GdxAI;
 import com.badlogic.gdx.ai.msg.MessageManager;
 import com.badlogic.gdx.graphics.GL20;
+import com.mweis.game.util.InputHandler;
 import com.mweis.game.view.ScreenManager;
 import com.mweis.game.view.screens.GameScreen;
 
@@ -31,6 +32,7 @@ public class Game implements ApplicationListener {
 	public void create() {
 		Gdx.graphics.setTitle("Game");
 		ScreenManager.setScreen(new GameScreen());
+		Gdx.input.setInputProcessor(new InputHandler());
 	}
 
 	@Override

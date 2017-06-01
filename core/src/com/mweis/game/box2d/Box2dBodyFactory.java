@@ -7,6 +7,7 @@ import com.badlogic.gdx.physics.box2d.Fixture;
 import com.badlogic.gdx.physics.box2d.FixtureDef;
 import com.badlogic.gdx.physics.box2d.PolygonShape;
 import com.badlogic.gdx.physics.box2d.World;
+import com.mweis.game.util.Constants;
 import com.badlogic.gdx.physics.box2d.BodyDef.BodyType;
 
 public class Box2dBodyFactory {
@@ -21,7 +22,7 @@ public class Box2dBodyFactory {
 		Body body = world.createBody(bodyDef);
 		
 		PolygonShape polygon = new PolygonShape();
-		polygon.setAsBox(2.0f, 2.0f);
+		polygon.setAsBox(32.0f / Constants.PPM, 32.0f / Constants.PPM);
 
 		FixtureDef fixtureDef = new FixtureDef();
 		fixtureDef.shape = polygon;
@@ -45,7 +46,7 @@ public class Box2dBodyFactory {
 		Body body = world.createBody(bodyDef);
 		
 		PolygonShape polygon = new PolygonShape();
-		polygon.setAsBox(3.5f, 3.5f);
+		polygon.setAsBox(48.0f / Constants.PPM, 48.0f / Constants.PPM);
 
 		FixtureDef fixtureDef = new FixtureDef();
 		fixtureDef.shape = polygon;

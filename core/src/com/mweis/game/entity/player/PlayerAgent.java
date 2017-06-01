@@ -11,6 +11,7 @@ import com.mweis.game.util.Messages;
 public class PlayerAgent implements Telegraph {
 	
 	public Body body;
+	public StateMachine<PlayerAgent, PlayerState> fsm;
 	
 	public PlayerAgent() {
 		this.body = null;
@@ -20,14 +21,10 @@ public class PlayerAgent implements Telegraph {
 		fsm.changeState(PlayerState.DEFAULT);
 		MessageManager.getInstance().addListener(this, Messages.Entity.UPDATE);
 	}
-	
-	public StateMachine<PlayerAgent, PlayerState> fsm;
 
 	@Override
 	public boolean handleMessage(Telegram msg) {
-		
 		if (msg.message == Messages.Dungeon.SPAWN_ENTITY) {
-			System.out.println(msg.returnReceiptStatus);
 			this.body = (Body) msg.extraInfo;
 			return true;
 		}

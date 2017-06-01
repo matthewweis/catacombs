@@ -62,6 +62,7 @@ public class InputHandler implements InputProcessor {
 
 	@Override
 	public boolean scrolled(int amount) {
-		return false;
+		MessageManager.getInstance().dispatchMessage(Messages.Input.SCROLLED, (Integer) amount);
+		return true;
 	}
 }

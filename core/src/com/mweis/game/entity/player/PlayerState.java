@@ -18,24 +18,20 @@ public enum PlayerState implements State<PlayerAgent> {
 
 		@Override
 		public void update(PlayerAgent entity) {
-			
-//			System.out.println(GdxAI.getTimepiece().getDeltaTime());
-//			System.out.println(1/60.0f == GdxAI.getTimepiece().getDeltaTime());
-			
-			float vx = 0.0f, vy = 0.0f, scale = 20.0f;
+
+			float vx = 0.0f, vy = 0.0f, scale = 40 * 20.0f;
 			if (Gdx.input.isKeyPressed(Keys.W)) {
-				vy += 1.0f * scale;
+				vy += 1.0f * GdxAI.getTimepiece().getDeltaTime() * scale;
 			}
 			if (Gdx.input.isKeyPressed(Keys.S)) {
-				vy -= 1.0f * scale;
+				vy -= 1.0f * GdxAI.getTimepiece().getDeltaTime()* scale;
 			}
 			if (Gdx.input.isKeyPressed(Keys.A)) {
-				vx -= 1.0f * scale;
+				vx -= 1.0f * GdxAI.getTimepiece().getDeltaTime()* scale;
 			}
 			if (Gdx.input.isKeyPressed(Keys.D)) {
-				vx += 1.0f * scale;
+				vx += 1.0f * GdxAI.getTimepiece().getDeltaTime()* scale;
 			}
-//			System.out.println(entity.body.getPosition());
 			
 			entity.body.setLinearVelocity(vx, vy);
 			
