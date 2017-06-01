@@ -13,11 +13,12 @@ import com.mweis.game.util.Constants;
 import com.mweis.game.util.Messages;
 import com.mweis.game.view.Screen;
 import com.mweis.game.world.Dungeon;
+import com.mweis.game.world.DungeonFactory;
 
 public class GameScreen implements Screen, Telegraph {
 	
 	private Box2DDebugRenderer renderer = new Box2DDebugRenderer();
-	private Dungeon dungeon = new Dungeon();
+	private Dungeon dungeon = DungeonFactory.generateDungeon();
 	private OrthographicCamera cam;
 	private PlayerAgent player;
 	
@@ -42,6 +43,7 @@ public class GameScreen implements Screen, Telegraph {
 		cam.position.set(position);
 		cam.update();
 		
+		dungeon.render(cam.combined);
 		renderer.render(dungeon.world, cam.combined.scl(Constants.PPM));
 	}
 

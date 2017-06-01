@@ -21,7 +21,7 @@ public enum PlayerState implements State<PlayerAgent> {
 		@Override
 		public void update(PlayerAgent entity) {
 			
-			float vx = 0.0f, vy = 0.0f, scale = 40 * 20.0f;
+			float vx = 0.0f, vy = 0.0f, scale = 80 * 20.0f;
 			if (Gdx.input.isKeyPressed(Keys.W)) {
 				vy += 1.0f * GdxAI.getTimepiece().getDeltaTime() * scale;
 			}

@@ -9,15 +9,16 @@ import com.badlogic.gdx.physics.box2d.PolygonShape;
 import com.badlogic.gdx.physics.box2d.World;
 import com.mweis.game.util.Constants;
 import com.badlogic.gdx.physics.box2d.BodyDef.BodyType;
+import com.badlogic.gdx.physics.box2d.EdgeShape;
 
 public class Box2dBodyFactory {
 	
-	public static Body createDynamicSquare(World world) {
+	public static Body createDynamicSquare(Vector2 position, World world) {
 		BodyDef bodyDef = new BodyDef();
 		
 		bodyDef.type = BodyType.DynamicBody; // could be kinematic
 		
-//		bodyDef.position.set(position);
+		bodyDef.position.set(position);
 
 		Body body = world.createBody(bodyDef);
 		
@@ -56,6 +57,47 @@ public class Box2dBodyFactory {
 		Fixture fixture = body.createFixture(fixtureDef);
 
 		polygon.dispose();
+		
+		return body;
+	}
+	
+	public static Body createEdge(Vector2 v1, Vector2 v2, World world) {
+		BodyDef bodyDef = new BodyDef();
+		
+		bodyDef.type = BodyType.StaticBody;
+		
+		// center of line segment
+//		float posx = (p1.x + p2.x)/2f;
+//		float posy = (p1.y + p2.y)/2f;
+//		
+//		// calculate length of line segment
+//		float len = (float) Math.sqrt((p1.x-p2.x)*(p1.x-p2.x)+(p1.y-p2.y)*(p1.y-p2.y));
+		
+		Vector2 v1c = new Vector2(v1);
+		v1c.x /= Constants.PPM;
+		v1c.y /= Constants.PPM;
+		
+		Vector2 v2c = new Vector2(v2);
+		v2c.x /= Constants.PPM;
+		v2c.y /= Constants.PPM;
+		
+//		bodyDef.position.set(v1);
+
+		Body body = world.createBody(bodyDef);
+		
+		EdgeShape edge = new EdgeShape();
+		
+		System.out.println(v1 + ", " + v2);
+		edge.set(v1c, v2c);
+
+		FixtureDef fixtureDef = new FixtureDef();
+		fixtureDef.shape = edge;
+//		fixtureDef.density = density;
+//		fixtureDef.isSensor = isSensor;
+		
+		Fixture fixture = body.createFixture(fixtureDef);
+
+		edge.dispose();
 		
 		return body;
 	}
