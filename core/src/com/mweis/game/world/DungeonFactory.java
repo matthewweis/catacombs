@@ -22,12 +22,12 @@ public class DungeonFactory {
 	/*
 	 * All dungeons hold their own copy of these, because eventually we may eventually want variance between dungeons.
 	 */
-	private static int mapSize = 35*2;
+	private static int mapSize = 35*3;
 	private static int scale = 1;
 	private static int minSideLength = 24;
 	private static int maxSideLength = 38;
-	private static int hallWidth = 7;
-	private static int corridorCount = 14;
+	private static int hallWidth = 9;
+	private static int corridorCount = 12;
 	private static int roomCount = 60;
 	private static float minRatio = 1.0f;
 	private static float maxRatio = 1.5f;

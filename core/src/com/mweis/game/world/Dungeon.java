@@ -1,6 +1,10 @@
 package com.mweis.game.world;
 
 import java.awt.geom.Line2D;
+import java.util.Iterator;
+import java.util.ListIterator;
+
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.ai.msg.MessageManager;
 import com.badlogic.gdx.ai.msg.Telegram;
 import com.badlogic.gdx.ai.msg.Telegraph;
@@ -26,7 +30,10 @@ public class Dungeon implements Telegraph {
 	
 	public World world;
 	
-	public final int WIDTH, HEIGHT, MIN_SIDE_LENGTH, MAX_SIDE_LENGTH, HALL_WIDTH, CORRIDOR_COUNT, ROOM_COUNT, HALL_COUNT;
+	public final int WIDTH, HEIGHT, MIN_SIDE_LENGTH, MAX_SIDE_LENGTH, HALL_WIDTH,
+		CORRIDOR_COUNT, ROOM_COUNT, HALL_COUNT,
+		// adjust this if units walking through walls is an issue
+		MAX_BOX2D_STATIC_BODY_SIZE = 50; // no effect if body size less than 2*blockSize
 	public final float MIN_RATIO, MAX_RATIO;
 	
 	private Room startRoom, endRoom;
@@ -34,8 +41,9 @@ public class Dungeon implements Telegraph {
 	private DGraph<Room> criticalRoomGraph;
 	private DGraph<Room> dungeonGraph;
 	
-	public final int UNITS_PER_PARTITION = 5; // units per square in the spatial partition for vectors -> rooms
-	public final int PARTITION_WIDTH; // with in CHUNKS
+	public final int UNITS_PER_PARTITION = 5, // width and height of each partition square
+			ESTIMATED_MAX_ROOMS_PER_PARTITION = 16, // used for init cap of ObjectSet, THIS IS ALWAYS ROUNDED UP TO NEXT POWER OF TWO
+			PARTITION_WIDTH; // with in CHUNKS
 	private final IntMap<Array<Room>> spatialPartition; // where Integer is x+y*unitsPerPartition coord
 	
 	public Dungeon(Room start, Room end, Array<Room> rooms, Array<Room> corridors, Array<Room> halls, DGraph<Room> criticalRoomGraph,
@@ -267,40 +275,40 @@ public class Dungeon implements Telegraph {
 				}
 			}
 			
-//			for (Room iroom : this.getPotentialRoomsInArea(room.getBounds())) {
-//				if (!lflag || !rflag || !tflag || !bflag) {
-//					if (!lflag) {
-//						if (left.intersects(iroom.getBounds().x, iroom.getBounds().y, iroom.getBounds().width, iroom.getBounds().height)) {
-//							left = new Line2D.Float(room.getLeft(), room.getBottom(), room.getLeft(), iroom.getBottom());
-//							left2 = new Line2D.Float(room.getLeft(), iroom.getTop(), room.getLeft(), room.getTop());
-//							lflag = true;
-//						}
-//					}
-//					if (!rflag) {
-//						if (right.intersects(iroom.getBounds().x, iroom.getBounds().y, iroom.getBounds().width, iroom.getBounds().height)) {
-//							right = new Line2D.Float(room.getRight(), room.getBottom(), room.getRight(), iroom.getBottom());
-//							right2 = new Line2D.Float(room.getRight(), iroom.getTop(), room.getRight(), room.getTop());
-//							rflag = true;
-//						}
-//					}
-//					if (!tflag) {
-//						if (top.intersects(iroom.getBounds().x, iroom.getBounds().y, iroom.getBounds().width, iroom.getBounds().height)) {
-//							top = new Line2D.Float(room.getLeft(), room.getTop(), iroom.getLeft(), room.getTop());
-//							top2 = new Line2D.Float(iroom.getRight(), room.getTop(), room.getRight(), room.getTop());
-//							tflag = true;
-//						}
-//					}
-//					if (!bflag) {
-//						if (bottom.intersects(iroom.getBounds().x, iroom.getBounds().y, iroom.getBounds().width, iroom.getBounds().height)) {
-//							bottom = new Line2D.Float(room.getLeft(), room.getBottom(), iroom.getLeft(), room.getBottom());
-//							bottom2 = new Line2D.Float(iroom.getRight(), room.getBottom(), room.getRight(), room.getBottom());
-//							bflag = true;
-//						}
-//					}
-//				} else {
-//					break;
-//				}
-//			}
+			for (Room iroom : this.getPotentialRoomsInArea(room.getBounds())) {
+				if (!lflag || !rflag || !tflag || !bflag) {
+					if (!lflag) {
+						if (left.intersects(iroom.getBounds().x, iroom.getBounds().y, iroom.getBounds().width, iroom.getBounds().height)) {
+							left = new Line2D.Float(room.getLeft(), room.getBottom(), room.getLeft(), iroom.getBottom());
+							left2 = new Line2D.Float(room.getLeft(), iroom.getTop(), room.getLeft(), room.getTop());
+							lflag = true;
+						}
+					}
+					if (!rflag) {
+						if (right.intersects(iroom.getBounds().x, iroom.getBounds().y, iroom.getBounds().width, iroom.getBounds().height)) {
+							right = new Line2D.Float(room.getRight(), room.getBottom(), room.getRight(), iroom.getBottom());
+							right2 = new Line2D.Float(room.getRight(), iroom.getTop(), room.getRight(), room.getTop());
+							rflag = true;
+						}
+					}
+					if (!tflag) {
+						if (top.intersects(iroom.getBounds().x, iroom.getBounds().y, iroom.getBounds().width, iroom.getBounds().height)) {
+							top = new Line2D.Float(room.getLeft(), room.getTop(), iroom.getLeft(), room.getTop());
+							top2 = new Line2D.Float(iroom.getRight(), room.getTop(), room.getRight(), room.getTop());
+							tflag = true;
+						}
+					}
+					if (!bflag) {
+						if (bottom.intersects(iroom.getBounds().x, iroom.getBounds().y, iroom.getBounds().width, iroom.getBounds().height)) {
+							bottom = new Line2D.Float(room.getLeft(), room.getBottom(), iroom.getLeft(), room.getBottom());
+							bottom2 = new Line2D.Float(iroom.getRight(), room.getBottom(), room.getRight(), room.getBottom());
+							bflag = true;
+						}
+					}
+				} else {
+					break;
+				}
+			}
 			
 			/*
 			 * Make Box2d copies of these lines
@@ -359,12 +367,12 @@ public class Dungeon implements Telegraph {
 	}
 	
 	/*
-	 * N^3 slow algorithm, but is very precise
+	 * N^3 slow algorithm, but is very precise and only runs one time at level creation
 	 */
 	private void populateBox2dWorldV2() {		
 		
 		/*
-		 * TileMerging algorithm from https://love2d.org/wiki/TileMerging, this merges WALLS ONLY
+		 * TileMerging algorithm from https://love2d.org/wiki/TileMerging, this merges into VERTICAL WALLS ONLY
 		 */
 		int blockSize = 1;
 		
@@ -383,14 +391,16 @@ public class Dungeon implements Telegraph {
 			}
 		}
 		
+//		Array<PointRectangle> rectangles = new Array<PointRectangle>(false, 100); // should use this one! much faster w/o ordering
 		Array<PointRectangle> rectangles = new Array<PointRectangle>();
-		for (int x = 0; x < WIDTH; x++) {
+		for (int x = 0; x < WIDTH; x += blockSize) {
 			// Integers mean we need to watch the == sign!
 			Integer start_y = null;
 			Integer end_y = null;
 			
-			for (int y = 0; y < HEIGHT; y++) {
-				if (this.getRoomsInArea(new Rectangle(x, y, blockSize, blockSize)).size == 0) { // check if chunk goes here
+			for (int y = 0; y < HEIGHT; y += blockSize) {
+				// WARNING: if getRoomsContainingArea is changed, so must be the other call to it below!
+				if (this.getRoomsContainingArea(new Rectangle(x, y, blockSize, blockSize)).size == 0) { // check if chunk goes here
 					if (start_y == null) {
 						start_y = y;
 					}
@@ -406,10 +416,6 @@ public class Dungeon implements Telegraph {
 					}
 					overlaps.sort();
 					for (PointRectangle r : overlaps) {
-						if (start_y == null) { // ! added safeguard
-							break;
-						}
-						
 						if (start_y < r.start_y) {
 							PointRectangle new_rect = new PointRectangle(x, start_y, x, r.start_y - blockSize);
 							rectangles.add(new_rect);
@@ -421,6 +427,7 @@ public class Dungeon implements Telegraph {
 							if (end_y == r.end_y) {
 								start_y = null;
 								end_y = null;
+								break; // safeguard. if NullPointerException shows up eventually they put safeguard at start of this for-loop
 							} else if (end_y > r.end_y) {
 								start_y = r.end_y + blockSize;
 							}
@@ -480,6 +487,108 @@ public class Dungeon implements Telegraph {
 		} while (mergeFlag);
 		
 		/*
+		 * Needlessly tall bodies can cause coll errors in box2d, we need to shrink out areas not affecting the map
+		 */
+		
+//		ObjectSet<PointRectangle> markedForDeletion = new ObjectSet<PointRectangle>(rectangles.size / 5);
+		A: for (PointRectangle r : rectangles) {
+			int max_y = max(r.start_y, r.end_y); // will change and must be recomputed per iteration
+			int min_y = min(r.start_y, r.end_y); // will change and must be recomputed per iteration
+			int max_x = max(r.start_x, r.end_x); // constant
+			int min_x = min(r.start_x, r.end_x); // constant
+			
+			
+			// shrink top down
+			boolean canShrink = true;
+			while (canShrink) {
+				
+//				if (max_y - min_y < blockSize) {
+//					markedForDeletion.add(r);
+//					canShrink = false;
+//					continue A;
+//				}
+				
+//				if (this.getPotentialRoomsInArea(new Rectangle(min_x, max_y - blockSize, max_x - min_x, blockSize)).size == 0
+				if (this.getPotentialRoomsInArea(new Rectangle(min_x, max_y - blockSize, max_x - min_x, blockSize)).size == 0
+						&& min_y >= 0){
+					if (r.end_y > r.start_y) {
+						r.end_y -= blockSize;
+					} else {
+						r.start_y -= blockSize;
+					}
+					max_y = max(r.start_y, r.end_y);
+					min_y = min(r.start_y, r.end_y);
+				} else {
+					canShrink = false;
+				}
+			}
+			
+			// shrink bottom up
+			canShrink = true;
+			while (canShrink) {
+				
+//				if (max_x - min_x < blockSize) {
+//					markedForDeletion.add(r);
+//					canShrink = false;
+//					continue A;
+//				}
+				
+//				if (this.getPotentialRoomsInArea(new Rectangle(min_x, min_y, max_x - min_x, blockSize)).size == 0
+				if (this.getPotentialRoomsInArea(new Rectangle(min_x, min_y, max_x - min_x, blockSize)).size == 0
+						&& max_y <= HEIGHT){
+					if (r.start_y < r.end_y) {
+						r.start_y += blockSize;
+					} else {
+						r.end_y += blockSize;
+					}
+					max_y = max(r.start_y, r.end_y);
+					min_y = min(r.start_y, r.end_y);
+				} else {
+					canShrink = false;
+				}
+			}
+		}
+		
+		// delete any rectangles whose size is too small after shrinking
+//		for (PointRectangle r : markedForDeletion) {
+//			rectangles.removeValue(r, true);
+//		}
+		
+		
+		/*
+		 * Any box2d objects bigger than the permitted size need to be cut into half until they are small enough
+		 */
+
+		
+		for (int i=0; i < rectangles.size; i++) {
+			PointRectangle r = rectangles.get(i);
+			int sx = min(r.start_x, r.end_x);
+			int sy = min(r.start_y, r.end_y);
+			int ex = max(r.start_x, r.end_x);
+			int ey = max(r.start_y, r.end_y);
+			int height = max(r.start_y, r.end_y) - sy;
+			int width = max(r.start_x, r.end_x) - sx;
+			
+			if (height > MAX_BOX2D_STATIC_BODY_SIZE && height > 2*blockSize) {
+				int halfway = (ey - sy + 1)/2;
+				PointRectangle top_half = new PointRectangle(sx, sy + halfway, ex, ey);
+				PointRectangle bottom_half = new PointRectangle(sx, sy, ex, sy + halfway);
+				rectangles.removeIndex(i);
+				i--;
+				rectangles.add(top_half);
+				rectangles.add(bottom_half);
+			} else if (width > MAX_BOX2D_STATIC_BODY_SIZE && height > 2*blockSize) {
+				int halfway = (ex - sx)/2;
+				PointRectangle left_half = new PointRectangle(sx, sy, sx + halfway, ey);
+				PointRectangle right_half = new PointRectangle(sx + halfway, sy, ex, ey);
+				rectangles.removeIndex(i);
+				i--;
+				rectangles.add(left_half);
+				rectangles.add(right_half);
+			}
+		}
+		
+		/*
 		 * Tiles are now merged, time to box2dify them
 		 */
 		
@@ -488,24 +597,38 @@ public class Dungeon implements Telegraph {
 			int sy = min(r.start_y, r.end_y);
 			int height = max(r.start_y, r.end_y) - sy;
 			int width = max(r.start_x, r.end_x) - sx;
+			if (height == 0) height = blockSize;
+			if (width == 0) width = blockSize;
+			
+			// add "just a bit" to the size of the walls
+			width += blockSize;
+			height += blockSize;
+			sx += blockSize / 2.0f;
+			sy += blockSize / 2.0f;
+			
+			// prints size of big rects
+			if (max(width, height) > MAX_BOX2D_STATIC_BODY_SIZE) {
+				System.out.format("sx: %d, sy: %d, width: %d, height: %d%n", sx, sy, width, height);
+			}
 			Box2dBodyFactory.createStaticRectangle(sx, sy, width, height, world);
 		}
 		
 		/*
-		 * Finally, make a border around the entire dungeon preventing escape
+		 * NO LONGER RELEVANT WITH BOX HEIGHT REDUCTION
+		 * Optional, make a border around the entire dungeon preventing escape if.
 		 * 
 		 * We might not want this actually, it could be cool to just put water/lava/height around the edges instead,
 		 * light could bleed in and it would be a tactical spot for players with knockback abilities to kite enemy mobs to.
 		 * (also light might hurt mobs, meaning kiting mobs towards the light is smart if the mob's weakness is known.
 		 */
-		Vector2 bottom_left = Vector2.Zero;
-		Vector2 bottom_right = new Vector2(WIDTH, 0);
-		Vector2 top_left = new Vector2(0, HEIGHT);
-		Vector2 top_right = new Vector2(WIDTH, HEIGHT);
-		Box2dBodyFactory.createEdge(top_left, top_right, world); // top
-		Box2dBodyFactory.createEdge(bottom_left, bottom_right, world); // bottom
-		Box2dBodyFactory.createEdge(bottom_left, top_left, world); // left
-		Box2dBodyFactory.createEdge(bottom_right, top_right, world); // right
+//		Vector2 bottom_left = Vector2.Zero;
+//		Vector2 bottom_right = new Vector2(WIDTH, 0);
+//		Vector2 top_left = new Vector2(0, HEIGHT);
+//		Vector2 top_right = new Vector2(WIDTH, HEIGHT);
+//		Box2dBodyFactory.createEdge(top_left, top_right, world); // top
+//		Box2dBodyFactory.createEdge(bottom_left, bottom_right, world); // bottom
+//		Box2dBodyFactory.createEdge(bottom_left, top_left, world); // left
+//		Box2dBodyFactory.createEdge(bottom_right, top_right, world); // right
 		
 	}
 	
@@ -615,8 +738,20 @@ public class Dungeon implements Telegraph {
 	}
 	
 	private ObjectSet<Room> getPotentialRoomsInArea(Rectangle area) {
+		int biggest = max(HALL_WIDTH, MIN_SIDE_LENGTH);
+		if (area.width > biggest || area.height > biggest) {
+//			try {
+//				throw new Exception();
+//			} catch (Exception e) {
+//				System.out.println("WARNING: Area -> Room algorithm has no case for entities larger than rooms");
+//				e.printStackTrace();
+//			}
+//			Gdx.app.error("getPotentialRoomsInArea",
+//					"WARNING: Area -> Room algorithm has no case for entities larger than rooms", new IllegalArgumentException());
+		}
+		
 		// create a list of rooms that area could potentially have from spatial partition
-		ObjectSet<Room> potentialRooms = new ObjectSet<Room>();
+		ObjectSet<Room> potentialRooms = new ObjectSet<Room>(ESTIMATED_MAX_ROOMS_PER_PARTITION);
 		
 		Integer aa = calculatePartitionKey(area.x, area.y);
 		Integer bb = calculatePartitionKey(area.x + area.width, area.y);
@@ -658,31 +793,57 @@ public class Dungeon implements Telegraph {
 		return potentialRooms;
 	}
 	
+
 	public Array<Room> getRoomsInArea(Rectangle area) {
-		int biggest = HALL_WIDTH > MIN_SIDE_LENGTH ? HALL_WIDTH : MIN_SIDE_LENGTH;
+		
+		int biggest = max(HALL_WIDTH, MIN_SIDE_LENGTH);
+		ObjectSet<Room> potentialRooms = null;
+		/*
+		 * If the area we're looking for is bigger than that of the spatial partition we need to subdivide it
+		 */
 		if (area.width > biggest || area.height > biggest) {
-			try {
-				throw new Exception();
-			} catch (Exception e) {
-				System.out.println("WARNING: Area -> Room algorithm has no case for entities larger than rooms");
-				e.printStackTrace();
+//			Gdx.app.error("getRoomsInArea", "areas larger than UNITS_PER_PARTITION might have problems");
+			int sizeFactor = (max(1, (int)area.width/UNITS_PER_PARTITION))*max(1, (int)area.height/UNITS_PER_PARTITION);
+			potentialRooms = new ObjectSet<Room>(ESTIMATED_MAX_ROOMS_PER_PARTITION*sizeFactor);
+			
+//			potentialRooms = new ObjectSet<Room>();
+			Rectangle r = new Rectangle(0.0f, 0.0f, UNITS_PER_PARTITION, UNITS_PER_PARTITION); // not problem?
+			
+			for (float y=area.y; y <= area.y + area.height; y += this.UNITS_PER_PARTITION) { // not problem
+				for (float x=area.x; x <= area.x + area.width; x += this.UNITS_PER_PARTITION) { // not problem
+					r.setX(x);
+					r.setY(y);
+					
+//					ObjectSet<Room> pRooms = this.getPotentialRoomsInArea(r);
+					Array<Room> pRooms = this.getAllPotentialRoomsAtPoint(x, y);
+					if (pRooms != null) {
+						potentialRooms.addAll(pRooms);
+					}
+				}
 			}
+						
+		} else {
+			/*
+			 * If the area we're looking for is smaller then we use 4 corners
+			 */
+			// create a list of rooms that area could potentially have from spatial partition
+			potentialRooms = this.getPotentialRoomsInArea(area);
+			
 		}
-		
-		// create a list of rooms that area could potentially have from spatial partition
-		ObjectSet<Room> potentialRooms = this.getPotentialRoomsInArea(area);
-		
-		// perform a bounds check on the potential rooms
-		Array<Room> rooms = new Array<Room>(potentialRooms.size);
-		for (Room room : potentialRooms) {			
-			if (room.getBounds().overlaps(area)) {
-				rooms.add(room);
+			// perform a bounds check on the potential rooms
+			Array<Room> rooms = new Array<Room>(potentialRooms.size);
+			for (Room room : potentialRooms) {			
+				if (room.getBounds().overlaps(area)) {
+					rooms.add(room);
+				}
 			}
-		}
-		
-		return rooms;
+			
+			return rooms;
 	}
 	
+	/*
+	 * Returns a list of rooms that could potentially be in our area from our spatial partition
+	 */
 	public Array<Room> getRoomsContainingArea(Rectangle area) {
 		// create a list of rooms that area could potentially have from spatial partition
 		ObjectSet<Room> potentialRooms = this.getPotentialRoomsInArea(area);
@@ -715,6 +876,31 @@ public class Dungeon implements Telegraph {
 		}
 		return null;
 	}
+	
+	public Array<Room> getAllRoomsAtPoint(Vector2 point) {
+		Array<Room> rooms = spatialPartition.get(calculatePartitionKey(point.x, point.y));
+		if (rooms != null) {
+			for (Room room : rooms) {
+				if (!room.getBounds().contains(point)) {
+					rooms.removeValue(room, true);
+				}
+			}
+		}
+		return rooms;
+	}
+	
+	public Array<Room> getAllPotentialRoomsAtPoint(Vector2 point) {
+		return getAllPotentialRoomsAtPoint(point.x, point.y);
+	}
+	
+	public Array<Room> getAllPotentialRoomsAtPoint(int x, int y) {
+		return spatialPartition.get(calculatePartitionKey(x, y)); // don't call other method, this is faster
+	}
+	
+	public Array<Room> getAllPotentialRoomsAtPoint(float x, float y) {
+		return spatialPartition.get(calculatePartitionKey(x, y));
+	}
+	
 	
 	private int calculateWidth() {
 		int leftmostWall = Integer.MAX_VALUE;

@@ -82,8 +82,9 @@ public class Box2dBodyFactory {
 		
 		PolygonShape polygon = new PolygonShape();
 //		polygon.setAsBox(size / 2 / Constants.PPM, size / 2 / Constants.PPM);
-		polygon.setAsBox(width / 2, height / 2);
+		polygon.setAsBox(width / 2.0f, height / 2.0f);
 
+		
 		FixtureDef fixtureDef = new FixtureDef();
 		fixtureDef.shape = polygon;
 //		fixtureDef.density = density;
