@@ -15,16 +15,16 @@ public class InputHandler implements InputProcessor {
 	@Override
 	public boolean keyDown(int keycode) {
 		if (keycode == Keys.W || keycode == Keys.UP) {
-			MessageManager.getInstance().dispatchMessage(Messages.Input.UP);
+			MessageManager.getInstance().dispatchMessage(Messages.INPUT.UP);
 			return true;
 		} else if (keycode == Keys.S || keycode == Keys.DOWN) {
-			MessageManager.getInstance().dispatchMessage(Messages.Input.DOWN);
+			MessageManager.getInstance().dispatchMessage(Messages.INPUT.DOWN);
 			return true;
 		} else if (keycode == Keys.A || keycode == Keys.LEFT) {
-			MessageManager.getInstance().dispatchMessage(Messages.Input.LEFT);
+			MessageManager.getInstance().dispatchMessage(Messages.INPUT.LEFT);
 			return true;
 		} else if (keycode == Keys.D || keycode == Keys.RIGHT) {
-			MessageManager.getInstance().dispatchMessage(Messages.Input.RIGHT);
+			MessageManager.getInstance().dispatchMessage(Messages.INPUT.RIGHT);
 			return true;
 		}
 		return false;
@@ -62,7 +62,7 @@ public class InputHandler implements InputProcessor {
 
 	@Override
 	public boolean scrolled(int amount) {
-		MessageManager.getInstance().dispatchMessage(Messages.Input.SCROLLED, (Integer) amount);
+		MessageManager.getInstance().dispatchMessage(Messages.INPUT.SCROLLED, (Integer) amount);
 		return true;
 	}
 }

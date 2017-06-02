@@ -1,10 +1,6 @@
 package com.mweis.game.world;
 
 import java.awt.geom.Line2D;
-import java.util.Iterator;
-import java.util.ListIterator;
-
-import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.ai.msg.MessageManager;
 import com.badlogic.gdx.ai.msg.Telegram;
 import com.badlogic.gdx.ai.msg.Telegraph;
@@ -32,7 +28,7 @@ public class Dungeon implements Telegraph {
 	
 	public final int WIDTH, HEIGHT, MIN_SIDE_LENGTH, MAX_SIDE_LENGTH, HALL_WIDTH,
 		CORRIDOR_COUNT, ROOM_COUNT, HALL_COUNT,
-		// adjust this if units walking through walls is an issue
+		// adjust this if units walking through walls is an issue:
 		MAX_BOX2D_STATIC_BODY_SIZE = 50; // no effect if body size less than 2*blockSize
 	public final float MIN_RATIO, MAX_RATIO;
 	
@@ -46,8 +42,9 @@ public class Dungeon implements Telegraph {
 			PARTITION_WIDTH; // with in CHUNKS
 	private final IntMap<Array<Room>> spatialPartition; // where Integer is x+y*unitsPerPartition coord
 	
-	public Dungeon(Room start, Room end, Array<Room> rooms, Array<Room> corridors, Array<Room> halls, DGraph<Room> criticalRoomGraph,
+	Dungeon(Room start, Room end, Array<Room> rooms, Array<Room> corridors, Array<Room> halls, DGraph<Room> criticalRoomGraph,
 			int minSideLength, int maxSideLength, int hallWidth, float minRatio, float maxRatio) {
+		
 		world = new World(Vector2.Zero, true);
 		
 		this.startRoom = start;
@@ -104,7 +101,7 @@ public class Dungeon implements Telegraph {
 		
 		
 		
-		MessageManager.getInstance().addListener(this, Messages.Dungeon.SPAWN_ENTITY);
+		MessageManager.getInstance().addListener(this, Messages.ENTITY.SPAWN);
 	}
 	
 	public Array<Room> getDungeon() {
@@ -589,27 +586,31 @@ public class Dungeon implements Telegraph {
 		}
 		
 		/*
-		 * Tiles are now merged, time to box2dify them
+		 * Tiles are now merged, time to box2dify them.
+		 * Also, remove any unused partitions here.
 		 */
-		
 		for (PointRectangle r : rectangles) {
 			int sx = min(r.start_x, r.end_x);
 			int sy = min(r.start_y, r.end_y);
 			int height = max(r.start_y, r.end_y) - sy;
 			int width = max(r.start_x, r.end_x) - sx;
+			
+			if (this.getPotentialRoomsInArea(new Rectangle(sx, sy, width, height)).size == 0) {
+				continue; // skip any rooms with no use
+			}
 			if (height == 0) height = blockSize;
 			if (width == 0) width = blockSize;
 			
 			// add "just a bit" to the size of the walls
-			width += blockSize;
-			height += blockSize;
-			sx += blockSize / 2.0f;
-			sy += blockSize / 2.0f;
+//			width += blockSize*2;
+//			height += blockSize*2;
+//			sx -= blockSize;// / 2.0f;
+//			sy -= blockSize;// / 2.0f;
 			
 			// prints size of big rects
-			if (max(width, height) > MAX_BOX2D_STATIC_BODY_SIZE) {
-				System.out.format("sx: %d, sy: %d, width: %d, height: %d%n", sx, sy, width, height);
-			}
+//			if (max(width, height) > MAX_BOX2D_STATIC_BODY_SIZE) {
+//				System.out.format("sx: %d, sy: %d, width: %d, height: %d%n", sx, sy, width, height);
+//			}
 			Box2dBodyFactory.createStaticRectangle(sx, sy, width, height, world);
 		}
 		
@@ -954,7 +955,7 @@ public class Dungeon implements Telegraph {
 
 	@Override
 	public boolean handleMessage(Telegram msg) {
-		if (msg.message == Messages.Dungeon.SPAWN_ENTITY) {
+		if (msg.message == Messages.ENTITY.SPAWN) {
 			msg.extraInfo = Box2dBodyFactory.createDynamicSquare(startRoom.getCenter(), world);
 			return true;
 		}
