@@ -1,7 +1,9 @@
 package com.mweis.game.entity;
 
 import com.badlogic.gdx.ai.fsm.State;
+import com.badlogic.gdx.ai.msg.MessageManager;
 import com.badlogic.gdx.math.Vector2;
+import com.mweis.game.util.Messages;
 
 /*
  * Has no build method. Instead the information here is spread to different systems.

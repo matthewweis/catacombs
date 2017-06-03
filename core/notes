@@ -1,0 +1,23 @@
+
+
+
+
+Systems:
+	- Systems are singletons whose only instance simply listens to a set of announcements around it, does bookkeeping,
+	  and sometimes sends out messages as well.
+	  
+Factories:
+	- Build an object and notify the proper systems
+	
+Blueprints:
+	- Essentially Factories but build method only sends notifications and returns nothing.
+	  
+TODO before continuing with list:
+	- fix message system organization (DONE)
+	- make dungeon behave as a system
+	
+the structure of the design patterns needs to be very clear before continuing, or the whole thing falls apart..
+
+after this, a RenderSystem needs to be made which listens to entity spawns and makes requests after DUNGEON_LOADED
+best case scenero, the rendering system is completely detached from the logic, but it might require listening during update polls
+after the render system works, continue with the list

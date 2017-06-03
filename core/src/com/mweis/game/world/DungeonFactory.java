@@ -13,29 +13,28 @@ import com.mweis.game.world.graph.Edge;
  * Corridors are the amount of "critical" rooms which will be passed through.
  * All intermediate "non-critical" dungeon rooms are included iff the halls pass through them.
  */
-public class DungeonFactory {
+class DungeonFactory {
 	
-	private static Random random = new Random();
-	
-	private static final int padding = -1;
+	private  Random random = new Random();
+	private  final int padding = -1;
 	
 	/*
 	 * All dungeons hold their own copy of these, because eventually we may eventually want variance between dungeons.
 	 */
-	private static int mapSize = 35*3;
-	private static int scale = 1;
-	private static int minSideLength = 24;
-	private static int maxSideLength = 38;
-	private static int hallWidth = 9;
-	private static int corridorCount = 12;
-	private static int roomCount = 60;
-	private static float minRatio = 1.0f;
-	private static float maxRatio = 1.5f;
-	private static float touchedRoomChance = 1.0f;
+	private  int mapSize = 35*3;
+	private  int scale = 1;
+	private  int minSideLength = 24;
+	private  int maxSideLength = 38;
+	private  int hallWidth = 9;
+	private  int corridorCount = 12;
+	private  int roomCount = 60;
+	private  float minRatio = 1.0f;
+	private  float maxRatio = 1.5f;
+	private  float touchedRoomChance = 1.0f;
 	
-	private static Room start, end;
+	private  Room start, end;
 	
-	public static Dungeon generateDungeon() {
+	DungeonBlueprint generateDungeon() {
 		Array<Room> rooms = createRooms();
 		seperateRooms(rooms);
 		Array<Room> corridors = findCorridors(rooms);
@@ -48,12 +47,18 @@ public class DungeonFactory {
 		Array<Room> untouched = removeUntouched(rooms, halls);
 		
 		findStartAndEnd(corridors);
-				
-		return new Dungeon(start, end, rooms, corridors, halls, graph, minSideLength,
+		
+		DungeonBlueprint build = new DungeonBlueprint(start, end, rooms, corridors, halls, graph, minSideLength,
 				maxSideLength, hallWidth, minRatio, maxRatio);
+		
+		// other build properties like lighting can go here!
+		
+		return build;
 	}
 	
-	private static Array<Room> createRooms() {
+	DungeonFactory() { } // can only be made in this package. Only the dungeon needs access
+	
+	private  Array<Room> createRooms() {
 		int width, height, x, y;
 		double ratio;
 		Room room;
@@ -72,7 +77,7 @@ public class DungeonFactory {
 		return rooms;
 	}
 	
-	private static void seperateRooms(Array<Room> rooms) {
+	private  void seperateRooms(Array<Room> rooms) {
 		Room a, b;
 		int dx, dxa, dxb, dy, dya, dyb;
 		boolean touching;
@@ -103,7 +108,7 @@ public class DungeonFactory {
 		} while(touching);
 	}
 	
-    private static Array<Room> findCorridors(Array<Room> rooms) {
+    private  Array<Room> findCorridors(Array<Room> rooms) {
     	rooms.sort();
     	Array<Room> corridors = new Array<Room>();
         for(int i = 0; i < corridorCount; i++) {
@@ -112,7 +117,7 @@ public class DungeonFactory {
         return corridors;
     }
 	
-	private static void centerCorridors(Array<Room> rooms, Array<Room> corridors) {
+	private  void centerCorridors(Array<Room> rooms, Array<Room> corridors) {
         int left = Integer.MAX_VALUE, right = Integer.MIN_VALUE;
         int top = Integer.MIN_VALUE, bottom = Integer.MAX_VALUE;
         for(Room corridor : corridors) {
@@ -129,7 +134,7 @@ public class DungeonFactory {
             room.shift(-shiftX, -shiftY);
     }
 
-    private static DGraph<Room> connectRooms(Array<Room> corridors) {
+    private  DGraph<Room> connectRooms(Array<Room> corridors) {
         Room a, b, c;
         DGraph<Room> graph = new DGraph<Room>();
         double abDist, acDist, bcDist;
@@ -166,7 +171,7 @@ public class DungeonFactory {
         return graph;
     }
 
-    private static Array<Room> createHalls(DGraph<Room> graph) {
+    private  Array<Room> createHalls(DGraph<Room> graph) {
         int dx, dy, x, y;
         Room a, b;
         Array<Room> keys = new Array<Room>();
@@ -208,7 +213,7 @@ public class DungeonFactory {
         return halls;
     }
     
-    private static Array<Room> removeUntouched(Array<Room> rooms, Array<Room> halls) {
+    private  Array<Room> removeUntouched(Array<Room> rooms, Array<Room> halls) {
     	Room room;
     	Array<Room> untouched = new Array<Room>();
     	boolean touched;
@@ -234,7 +239,7 @@ public class DungeonFactory {
     /*
      * Send list of corridors, and this will set the starting and ending rooms.
      */
-    private static void findStartAndEnd(Array<Room> corridors) {
+    private  void findStartAndEnd(Array<Room> corridors) {
         Room a, b;
         double maxDist = Double.MIN_VALUE, dist;
         for(int i = 0;i < corridors.size;i++) {
@@ -258,7 +263,7 @@ public class DungeonFactory {
 	
 	
 	
-	private static int getRandomGausInt(int size) {
+	private  int getRandomGausInt(int size) {
         double r = random.nextGaussian();
         r *= size/5;
         r += size/2;
@@ -268,7 +273,7 @@ public class DungeonFactory {
             return (int)r;
     }
 
-    private static int getRandomGausSmallInt(int size) {
+    private  int getRandomGausSmallInt(int size) {
         double r = random.nextGaussian();
         r *= size/1.5;
         if(r < 0)
@@ -279,9 +284,8 @@ public class DungeonFactory {
             return (int)r;
     }
 	
-	private static int getRandomSide() {
+	private  int getRandomSide() {
 		return getRandomGausSmallInt(maxSideLength - minSideLength) + minSideLength;
 	}
 	
-	private DungeonFactory() { } // factories need no instantiation
 }

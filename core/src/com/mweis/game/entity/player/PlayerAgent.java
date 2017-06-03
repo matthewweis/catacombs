@@ -12,7 +12,6 @@ public class PlayerAgent extends Agent<PlayerAgent, PlayerState> {
 		super(builder);
 		super.setStateMachine(new DefaultStateMachine<PlayerAgent, PlayerState>(this));
 		super.getStateMachine().changeState(PlayerState.DEFAULT);
-		
-		MessageManager.getInstance().addListener(this, Messages.ENTITY.UPDATE);
+//		MessageManager.getInstance().addListener(this, Messages.ENTITY.UPDATE); // ONLY SUBSCRIBE TO UNTARGETED MESSAGES
 	}	
 }

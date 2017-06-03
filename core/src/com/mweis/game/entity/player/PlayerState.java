@@ -14,7 +14,7 @@ public enum PlayerState implements State<PlayerAgent> {
 		
 		@Override
 		public void enter(PlayerAgent entity) {
-			MessageManager.getInstance().dispatchMessage(null, entity, Messages.ENTITY.UPDATE);
+			MessageManager.getInstance().dispatchMessage(null, entity, Messages.NOTIFY.UPDATE);
 		}
 
 		@Override
@@ -41,7 +41,7 @@ public enum PlayerState implements State<PlayerAgent> {
 			
 			entity.getBody().setLinearVelocity(vx, vy);
 						
-			MessageManager.getInstance().dispatchMessage(1/60.0f, null, entity, Messages.ENTITY.UPDATE);
+			MessageManager.getInstance().dispatchMessage(1/60.0f, null, entity, Messages.NOTIFY.UPDATE);
 		}
 
 		@Override
@@ -51,7 +51,7 @@ public enum PlayerState implements State<PlayerAgent> {
 
 		@Override
 		public boolean onMessage(PlayerAgent entity, Telegram telegram) {
-			if (telegram.message == Messages.ENTITY.UPDATE) {
+			if (telegram.message == Messages.NOTIFY.UPDATE) {
 				entity.getStateMachine().update();
 				return true;
 			}

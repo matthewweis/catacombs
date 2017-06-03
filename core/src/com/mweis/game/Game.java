@@ -14,8 +14,16 @@ import com.mweis.game.view.screens.GameScreen;
  * ==========================
  * Setup base w/ Messages (DONE) 
  * Setup b2d WSAD world (DONE)
- * Setup b2d from gen world
- * Setup base entity (only what is needed for tests, NO STEERING YET)
+ * Setup b2d from gen world (DONE, needs improvement)
+ * Setup base entity (only what is needed for tests, NO STEERING YET) (DONE)
+ * 
+ * INTERMISSION TODO
+ * 1. watch video on gameState manager and check his update/render loop logic
+ * 2. implement camera interpolation for smoothening
+ * 3. play w/ lights and make smooth
+ * 4. make first "System" class, whose 1 and only job is to manage lights based on Messages
+ * ================
+ * 
  * setup colls w/ world
  * setup ai pathing (using gdx ai scheduling)
  * setup shadows, and vision

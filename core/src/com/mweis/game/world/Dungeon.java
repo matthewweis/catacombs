@@ -24,7 +24,9 @@ import com.mweis.game.world.graph.Edge;
 
 public class Dungeon implements Telegraph {
 	
-	public World world;
+	private static Dungeon INSTANCE = new Dungeon(new DungeonFactory().generateDungeon());
+	
+	private World world;
 	
 	public final int WIDTH, HEIGHT, MIN_SIDE_LENGTH, MAX_SIDE_LENGTH, HALL_WIDTH,
 		CORRIDOR_COUNT, ROOM_COUNT, HALL_COUNT,
@@ -42,42 +44,48 @@ public class Dungeon implements Telegraph {
 			PARTITION_WIDTH; // with in CHUNKS
 	private final IntMap<Array<Room>> spatialPartition; // where Integer is x+y*unitsPerPartition coord
 	
-	Dungeon(Room start, Room end, Array<Room> rooms, Array<Room> corridors, Array<Room> halls, DGraph<Room> criticalRoomGraph,
-			int minSideLength, int maxSideLength, int hallWidth, float minRatio, float maxRatio) {
+	// make dungeon constructor take Blueprint!
+//	Dungeon(Room start, Room end, Array<Room> rooms, Array<Room> corridors, Array<Room> halls, DGraph<Room> criticalRoomGraph,
+//			int minSideLength, int maxSideLength, int hallWidth, float minRatio, float maxRatio) {
+	Dungeon(DungeonBlueprint blueprint) {
+		
+		if (world != null) {
+			world.dispose(); // dispose of last world if new one is made
+		}
 		
 		world = new World(Vector2.Zero, true);
 		
-		this.startRoom = start;
-		this.endRoom = end;
-		this.noncriticalRooms = rooms;
-		this.criticalRooms = corridors;
-		this.allRooms = new Array<Room>(rooms);
-		this.allRooms.addAll(corridors);
-		this.halls =  halls;
-		this.criticalRoomGraph = criticalRoomGraph;
-		this.MIN_SIDE_LENGTH = minSideLength;
-		this.MAX_SIDE_LENGTH = maxSideLength;
-		this.HALL_WIDTH = hallWidth;
-		this.CORRIDOR_COUNT = corridors.size;
-		this.ROOM_COUNT = rooms.size;
-		this.HALL_COUNT = halls.size;
-		this.MIN_RATIO = minRatio;
-		this.MAX_RATIO = maxRatio;
+		this.startRoom = blueprint.getStart();
+		this.endRoom = blueprint.getEnd();
+		this.noncriticalRooms = blueprint.getRooms();
+		this.criticalRooms = blueprint.getCorridors();
+		this.allRooms = new Array<Room>(blueprint.getRooms());
+		this.allRooms.addAll(blueprint.getCorridors());
+		this.halls =  blueprint.getHalls();
+		this.criticalRoomGraph = blueprint.getCriticalRoomGraph();
+		this.MIN_SIDE_LENGTH = blueprint.getMinSideLength();
+		this.MAX_SIDE_LENGTH = blueprint.getMaxSideLength();
+		this.HALL_WIDTH = blueprint.getHallWidth();
+		this.CORRIDOR_COUNT = blueprint.getCorridors().size;
+		this.ROOM_COUNT = blueprint.getRooms().size;
+		this.HALL_COUNT = blueprint.getHalls().size;
+		this.MIN_RATIO = blueprint.getMinRatio();
+		this.MAX_RATIO = blueprint.getMaxRatio();
 		
 		this.dungeon = new Array<Room>();
 		
 		/*
 		 * Add all rooms to dungeon and mark their type
 		 */
-		for (Room room : rooms) {
+		for (Room room : blueprint.getRooms()) {
 			this.dungeon.add(room);
 			room.setType(RoomType.NONCRITICAL);
 		}
-		for (Room corridor : corridors) {
+		for (Room corridor : blueprint.getCorridors()) {
 			this.dungeon.add(corridor);
 			corridor.setType(RoomType.CRITICAL);
 		}
-		for (Room hall : halls) {
+		for (Room hall : blueprint.getHalls()) {
 			this.dungeon.add(hall);
 			hall.setType(RoomType.HALLWAY);
 		}
@@ -97,18 +105,34 @@ public class Dungeon implements Telegraph {
 //		this.populateBox2dWorld();
 		this.populateBox2dWorldV2();
 		
-		
-		
-		
-		
-		MessageManager.getInstance().addListener(this, Messages.ENTITY.SPAWN);
+		MessageManager.getInstance().addListener(this, Messages.SOLICIT.ENTITY_SPAWNED);
+	}
+	
+	
+	@Override
+	public boolean handleMessage(Telegram msg) {
+		if (msg.message == Messages.ANNOUNCE.DUNGEON_NEW) {
+			DungeonFactory factory = new DungeonFactory();
+			DungeonBlueprint builder = factory.generateDungeon();
+//			this.INSTANCE = new Dungeon();
+			// make dungeon constructor take Blueprint!
+			
+		} else if (msg.message == Messages.SOLICIT.ENTITY_SPAWNED) {
+			msg.extraInfo = Box2dBodyFactory.createDynamicSquare(startRoom.getCenter(), world);
+			return true;
+		}
+		return false;
+	}
+	
+	public World getWorld() {
+		return this.world;
 	}
 	
 	public Array<Room> getDungeon() {
 		return dungeon;
 	}
 	
-	public Array<Room> getRooms() {
+	public Array<Room> getOptionalRooms() {
 		return noncriticalRooms;
 	}
 	
@@ -116,7 +140,11 @@ public class Dungeon implements Telegraph {
 		return halls;
 	}
 	
-	public Array<Room> getCorridors() {
+	public Array<Room> getRooms() { // rooms only, not halls
+		return allRooms;
+	}
+	
+	public Array<Room> getCriticalRooms() {
 		return criticalRooms;
 	}
 	
@@ -640,11 +668,11 @@ public class Dungeon implements Telegraph {
 	    
 	    
 	    sr.setColor(Color.BROWN);
-	    for (Room corridor : getCorridors()) {
+	    for (Room corridor : getCriticalRooms()) {
 	    	sr.rect(corridor.getLeft(), corridor.getBottom(), corridor.getWidth(), corridor.getHeight());
 	    }
 	    sr.setColor(Color.SALMON);
-		for (Room rooms : getRooms()) {
+		for (Room rooms : getOptionalRooms()) {
 			sr.rect(rooms.getLeft(), rooms.getBottom(), rooms.getWidth(), rooms.getHeight());
 		}
 		
@@ -951,14 +979,5 @@ public class Dungeon implements Telegraph {
 	
 	private boolean withinNUnits(int a, int b, int range) {
 		return Math.abs(a - b) <= range;
-	}
-
-	@Override
-	public boolean handleMessage(Telegram msg) {
-		if (msg.message == Messages.ENTITY.SPAWN) {
-			msg.extraInfo = Box2dBodyFactory.createDynamicSquare(startRoom.getCenter(), world);
-			return true;
-		}
-		return false;
 	}
 }

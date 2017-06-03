@@ -14,7 +14,7 @@ public abstract class Agent<A extends Agent<A, S>, S extends State<A>> implement
 	
 
 	public Agent(AgentBuilder<A, S> builder) {
-		MessageManager.getInstance().dispatchMessage(this, Messages.ENTITY.SPAWN, builder, true);
+		MessageManager.getInstance().dispatchMessage(this, Messages.SOLICIT.ENTITY_SPAWNED, builder, true);
 	}
 
 	public Body getBody() {
@@ -35,7 +35,7 @@ public abstract class Agent<A extends Agent<A, S>, S extends State<A>> implement
 	
 	@Override
 	public boolean handleMessage(Telegram msg) {
-		if (msg.message == Messages.ENTITY.SPAWN) {
+		if (msg.message == Messages.SOLICIT.ENTITY_SPAWNED) {
 			if (msg.extraInfo instanceof Body) { // reply from dungeon
 				this.body = (Body) msg.extraInfo;
 			}
